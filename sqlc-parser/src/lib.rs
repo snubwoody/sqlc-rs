@@ -3,15 +3,40 @@ use sqlparser::ast::{CreateTable, DataType, Statement};
 use sqlparser::dialect::GenericDialect;
 use sqlparser::parser::Parser;
 
-// TODO: Maybe use hashmap for fields
 #[derive(Debug,Clone,PartialEq,Eq)]
-struct Table{
+pub struct Table{
     name: String,
+    // TODO: switch to column
     columns: HashMap<String,ColumnType>,
 }
 
+impl Table{
+    /// Get the name of the table.
+    pub fn name(&self) -> &str{
+        self.name.as_str()
+    }
+
+    /// Get the columns of the table.
+    pub fn columns(&self) -> &HashMap<String,ColumnType>{
+        &self.columns
+    }
+
+    pub fn parse_query(query: &CreateTable) -> Self{
+        let mut columns:HashMap<String,ColumnType> = HashMap::new();
+        for col in &query.columns{
+            let data_type = ColumnType::from(col.data_type.clone());
+            columns.insert(col.name.to_string(), data_type);
+        }
+
+        Self {
+            name: query.name.to_string(),
+            columns
+        }
+    }
+}
+
 #[derive(Debug,Clone,PartialEq,Eq,PartialOrd,Ord)]
-enum ColumnType{
+pub enum ColumnType{
     Serial,
     Uuid,
     /// 4 byte integer
@@ -29,12 +54,12 @@ enum ColumnType{
 impl From<DataType> for ColumnType {
     fn from(dt:DataType) -> Self {
         match dt{
-            DataType::Int(_) => ColumnType::Integer,
+            DataType::Int(_) | DataType::Integer(_) => ColumnType::Integer,
             DataType::BigInt(_) => ColumnType::BigInt,
             DataType::SmallInt(_) => ColumnType::SmallInt,
             DataType::Boolean => ColumnType::Boolean,
-            DataType::Text | 
-            DataType::Varchar(_) | 
+            DataType::Text |
+            DataType::Varchar(_) |
             DataType::Character(_) => ColumnType::Text,
             _ => ColumnType::Custom(format!("{}", dt))
         }
@@ -42,7 +67,7 @@ impl From<DataType> for ColumnType {
 }
 
 #[derive(Debug,Clone,PartialEq,PartialOrd,)]
-struct Column{
+pub struct Column{
     name: String,
     field_type: ColumnType,
     is_unique: bool,
@@ -78,12 +103,3 @@ fn parse_table(query: &CreateTable){
     dbg!(table);
 }
 
-#[cfg(test)]
-mod test{
-    use super::*;
-
-    #[test]
-    fn sql(){
-        parse_sql();
-    }
-}

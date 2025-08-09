@@ -87,6 +87,13 @@ name = "sqlc-macros"
 version = "0.1.0"
 
 [[package]]
+name = "sqlc-parser"
+version = "0.1.0"
+dependencies = [
+ "sqlparser",
+]
+
+[[package]]
 name = "sqlc-rs"
 version = "0.1.0"
 dependencies = [
