@@ -1,0 +1,8 @@
+/target
+
+# IDE settings
+.idea/
+.vscode/
+
+# Environment
+**/.env*
