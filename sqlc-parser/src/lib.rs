@@ -1,13 +1,10 @@
 use std::collections::HashMap;
-use sqlparser::ast::{CreateTable, DataType, Statement};
-use sqlparser::dialect::GenericDialect;
-use sqlparser::parser::Parser;
+use sqlparser::ast::{ColumnDef, ColumnOption, CreateTable, DataType};
 
-#[derive(Debug,Clone,PartialEq,Eq)]
+#[derive(Debug,Clone,PartialEq)]
 pub struct Table{
     name: String,
-    // TODO: switch to column
-    columns: HashMap<String,ColumnType>,
+    columns: Vec<Column>,
 }
 
 impl Table{
@@ -17,15 +14,19 @@ impl Table{
     }
 
     /// Get the columns of the table.
-    pub fn columns(&self) -> &HashMap<String,ColumnType>{
+    pub fn columns(&self) -> &[Column]{
         &self.columns
+    }
+    
+    /// Get a column by its name.
+    pub fn get_column(&self,name: &str) -> Option<&Column>{
+        self.columns.iter().find(|c| c.name == name)
     }
 
     pub fn parse_query(query: &CreateTable) -> Self{
-        let mut columns:HashMap<String,ColumnType> = HashMap::new();
-        for col in &query.columns{
-            let data_type = ColumnType::from(col.data_type.clone());
-            columns.insert(col.name.to_string(), data_type);
+        let mut columns = vec![];
+        for def in &query.columns{
+            columns.push(Column::parse(def));
         }
 
         Self {
@@ -68,38 +69,35 @@ impl From<DataType> for ColumnType {
 
 #[derive(Debug,Clone,PartialEq,PartialOrd,)]
 pub struct Column{
-    name: String,
-    field_type: ColumnType,
-    is_unique: bool,
-    is_primary: bool,
-    nullable: bool
+    pub name: String,
+    pub field_type: ColumnType,
+    pub is_unique: bool,
+    pub is_primary: bool,
+    pub nullable: bool
 }
 
-fn parse_sql(){
-    let sql = include_str!("../../schema.sql");
-    let dialect = GenericDialect{};
-    let ast = Parser::parse_sql(&dialect, sql).unwrap();
-    for statement in ast{
-        match statement{
-            Statement::CreateTable(table) => {
-                parse_table(&table);
-            },
-            _ => {}
+impl Column{
+    pub fn parse(def: &ColumnDef) -> Self{
+        let mut nullable = true;
+        let mut is_unique = false;
+        let mut is_primary = false;
+        for option in &def.options{
+            match option.option{
+                ColumnOption::NotNull => nullable = false,
+                ColumnOption::Unique{is_primary:primary_key,..} => {
+                    is_unique = true;
+                    if primary_key{ is_primary = true}
+                },
+                _ => {}
+            }
+        }
+        Self{
+            name: def.name.to_string(),
+            field_type: ColumnType::from(def.data_type.clone()),
+            is_primary,
+            is_unique,
+            nullable: true
         }
     }
-}
-
-fn parse_table(query: &CreateTable){
-    let mut columns:HashMap<String,ColumnType> = HashMap::new();
-    for col in &query.columns{
-        let data_type = ColumnType::from(col.data_type.clone());
-        columns.insert(col.name.to_string(), data_type);
-    }
-    let table = Table{
-        name: query.name.to_string(),
-        columns
-    };
-
-    dbg!(table);
 }
 
