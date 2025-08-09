@@ -1,6 +1,10 @@
-[package]
-name = "sqlc-rs"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+resolver = "3"
 
-[dependencies]
+members = [
+    "sqlc",
+    "sqlc-macros"
+]
+
+[workspace.dependencies]
+sqlparser = "0.58.0"
