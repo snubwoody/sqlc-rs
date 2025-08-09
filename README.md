@@ -1,0 +1,2 @@
+# sqlc
+A sql library.
