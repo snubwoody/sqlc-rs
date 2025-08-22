@@ -14,3 +14,16 @@ proc-macro2 = "1.0.95"
 quote = "1.0.40"
 chrono = "0.4.41"
 sqlc-parser = {path = "sqlc-parser"}
+
+[workspace.dependencies.sqlx]
+version = "0.8.6"
+features = [
+    "runtime-tokio",
+    "tls-rustls",
+    "postgres",
+    "sqlite",
+    "mysql",
+    "derive",
+    "uuid",
+    "chrono"
+]

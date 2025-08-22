@@ -87,7 +87,6 @@ pub enum ColumnType{
     Boolean,
     /// Any text type
     Text,
-    Custom(String)
 }
 
 impl ToTokens for ColumnType{
@@ -113,7 +112,7 @@ impl From<DataType> for ColumnType {
             DataType::Text |
             DataType::Varchar(_) |
             DataType::Character(_) => ColumnType::Text,
-            _ => ColumnType::Custom(format!("{}", dt))
+            _ => panic!("Unsupported type: {dt}"),
         }
     }
 }

@@ -35,6 +35,6 @@ fn parse_multiple_tables() {
 
     db::User { id: 200, };
 
-    // db::Group{ id: String::new() };
+    db::Group{ id: String::new() };
 
 }

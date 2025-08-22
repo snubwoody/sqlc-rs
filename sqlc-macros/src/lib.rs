@@ -8,7 +8,6 @@ use sqlc_parser::{parse_schema, Table};
 pub fn parse_sql_str(input: TokenStream) -> TokenStream {
     let value = parse_macro_input!(input as LitStr);
     let schema = value.value();
-    dbg!(&schema);
     let tables = parse_schema(&schema);
     let tables = parse_tables(&tables);
     let tokens = quote! {
