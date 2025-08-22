@@ -1,5 +1,5 @@
 
-CREATE TABLE users(
-    id SERIAL PRIMARY KEY,
+CREATE TABLE user(
+    id INTEGER PRIMARY KEY,
     email TEXT NOT NULL
 );

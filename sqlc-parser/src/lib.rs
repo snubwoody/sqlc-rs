@@ -1,5 +1,8 @@
-use std::collections::HashMap;
-use sqlparser::ast::{ColumnDef, ColumnOption, CreateTable, DataType};
+use quote::__private::TokenStream;
+use quote::{quote, ToTokens};
+use sqlparser::ast::{ColumnDef, ColumnOption, CreateTable, DataType, Statement};
+use sqlparser::parser::Parser;
+use sqlparser::dialect::GenericDialect;
 
 #[derive(Debug,Clone,PartialEq)]
 pub struct Table{
@@ -36,36 +39,6 @@ impl Table{
     }
 }
 
-#[derive(Debug,Clone,PartialEq,Eq,PartialOrd,Ord)]
-pub enum ColumnType{
-    Serial,
-    Uuid,
-    /// 4 byte integer
-    Integer,
-    /// 8 byte integer
-    BigInt,
-    /// 2 byte integer
-    SmallInt,
-    Boolean,
-    /// Any text type
-    Text,
-    Custom(String)
-}
-
-impl From<DataType> for ColumnType {
-    fn from(dt:DataType) -> Self {
-        match dt{
-            DataType::Int(_) | DataType::Integer(_) => ColumnType::Integer,
-            DataType::BigInt(_) => ColumnType::BigInt,
-            DataType::SmallInt(_) => ColumnType::SmallInt,
-            DataType::Boolean => ColumnType::Boolean,
-            DataType::Text |
-            DataType::Varchar(_) |
-            DataType::Character(_) => ColumnType::Text,
-            _ => ColumnType::Custom(format!("{}", dt))
-        }
-    }
-}
 
 #[derive(Debug,Clone,PartialEq,PartialOrd,)]
 pub struct Column{
@@ -101,3 +74,62 @@ impl Column{
     }
 }
 
+#[derive(Debug,Clone,PartialEq,Eq,PartialOrd,Ord)]
+pub enum ColumnType{
+    Serial,
+    Uuid,
+    /// 4 byte integer
+    Integer,
+    /// 8 byte integer
+    BigInt,
+    /// 2 byte integer
+    SmallInt,
+    Boolean,
+    /// Any text type
+    Text,
+    Custom(String)
+}
+
+impl ToTokens for ColumnType{
+    fn to_tokens(&self, tokens: &mut TokenStream){
+        let ty = match &self{
+            ColumnType::Serial | ColumnType::Integer => quote!{ i32 } ,
+            ColumnType::BigInt => quote!{ i64 } ,
+            ColumnType::SmallInt => quote!{ i16 } ,
+            ColumnType::Boolean => quote!{ bool } ,
+            ColumnType::Text => quote!{ String } ,
+            _ => panic!("Not implemented"),
+        };
+        tokens.extend(ty);
+    }
+}
+impl From<DataType> for ColumnType {
+    fn from(dt:DataType) -> Self {
+        match dt{
+            DataType::Int(_) | DataType::Integer(_) => ColumnType::Integer,
+            DataType::BigInt(_) => ColumnType::BigInt,
+            DataType::SmallInt(_) => ColumnType::SmallInt,
+            DataType::Boolean => ColumnType::Boolean,
+            DataType::Text |
+            DataType::Varchar(_) |
+            DataType::Character(_) => ColumnType::Text,
+            _ => ColumnType::Custom(format!("{}", dt))
+        }
+    }
+}
+
+
+pub fn parse_schema(schema: &str) -> Vec<Table>{
+    let dialect = GenericDialect{};
+    let ast = Parser::parse_sql(&dialect, schema).unwrap();
+    let mut tables = vec![];
+    match &ast[0]{
+        Statement::CreateTable(query) => {
+            let table = Table::parse_query(query);
+            tables.push(table);
+        },
+        _ => panic!("Not a CreateTable")
+    }
+
+    tables
+}

@@ -7,3 +7,7 @@ edition = "2024"
 proc-macro = true
 
 [dependencies]
+syn.workspace = true
+quote.workspace = true
+proc-macro2.workspace = true
+sqlc-parser.workspace = true
