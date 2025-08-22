@@ -5,4 +5,5 @@ edition = "2024"
 
 [dependencies]
 sqlparser.workspace = true
+proc-macro2.workspace = true
 quote.workspace = true

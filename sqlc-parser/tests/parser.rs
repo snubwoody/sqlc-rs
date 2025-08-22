@@ -1,7 +1,14 @@
 use sqlparser::ast::{CreateTable, Statement};
 use sqlparser::parser::Parser;
 use sqlparser::dialect::GenericDialect;
-use sqlc_parser::{ColumnType, Table};
+use sqlc_parser::{parse_schema, ColumnType, Table};
+
+#[test]
+fn parse_multiple_tables(){
+    let sql = "CREATE TABLE images(); CREATE TABLE users()";
+    let tables = parse_schema(sql);
+    assert_eq!(tables.len(), 2)
+}
 
 #[test]
 fn table_name(){

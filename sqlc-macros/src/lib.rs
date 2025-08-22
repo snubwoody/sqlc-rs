@@ -1,26 +1,38 @@
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use syn::parse_macro_input;
-use sqlc_parser::{parse_schema, ColumnType, Table};
+use syn::{parse_macro_input, LitStr};
+use sqlc_parser::{parse_schema, Table};
 
 #[proc_macro]
-pub fn parse_sql(input: TokenStream) -> TokenStream {
-    // FIXME: Remove custom type and just panic
-    let tables = parse_schema(include_str!("../../schema.sql"));
-    let table = &tables[0];
-    // dbg!(&table);
-    let name = to_pascal_case(table.name());
-    let ident = Ident::new(&name, Span::call_site());
-    let fields = parse_fields(&table);
+pub fn parse_sql_str(input: TokenStream) -> TokenStream {
+    let value = parse_macro_input!(input as LitStr);
+    let schema = value.value();
+    dbg!(&schema);
+    let tables = parse_schema(&schema);
+    let tables = parse_tables(&tables);
     let tokens = quote! {
-        #[derive(Debug)]
-        pub struct #ident{
-            #(#fields),*
-        }
+        #(#tables)*
     };
     
     TokenStream::from(tokens)
+}
+
+fn parse_tables(tables: &[Table]) -> Vec<proc_macro2::TokenStream> {
+    let mut structs = vec![];
+    for table in tables {
+        let name = to_pascal_case(table.name());
+        let ident = Ident::new(&name, Span::call_site());
+        let fields = parse_fields(&table);
+        let tokens = quote! {
+            #[derive(Debug)]
+            pub struct #ident{
+                #(#fields),*
+            }
+        };
+        structs.push(tokens);
+    }
+    structs
 }
 
 fn parse_fields(table: &Table) -> Vec<proc_macro2::TokenStream> {

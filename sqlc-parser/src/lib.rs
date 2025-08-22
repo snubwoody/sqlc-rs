@@ -1,7 +1,7 @@
-use quote::__private::TokenStream;
 use quote::{quote, ToTokens};
 use sqlparser::ast::{ColumnDef, ColumnOption, CreateTable, DataType, Statement};
 use sqlparser::parser::Parser;
+use proc_macro2::TokenStream;
 use sqlparser::dialect::GenericDialect;
 
 #[derive(Debug,Clone,PartialEq)]
@@ -123,12 +123,14 @@ pub fn parse_schema(schema: &str) -> Vec<Table>{
     let dialect = GenericDialect{};
     let ast = Parser::parse_sql(&dialect, schema).unwrap();
     let mut tables = vec![];
-    match &ast[0]{
-        Statement::CreateTable(query) => {
-            let table = Table::parse_query(query);
-            tables.push(table);
-        },
-        _ => panic!("Not a CreateTable")
+    for stmt in &ast{
+        match stmt{
+            Statement::CreateTable(query) => {
+                let table = Table::parse_query(query);
+                tables.push(table);
+            },
+            _ => panic!("Not a CreateTable")
+        }
     }
 
     tables

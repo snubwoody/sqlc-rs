@@ -29,3 +29,6 @@ make migrations for you.
 
 
 --: Not yet supported
+
+## TODO
+- Remove plural of table names
